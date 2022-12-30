@@ -1,0 +1,52 @@
+Load labels' data
+-------------------
+#Labels:         4654
+Frequent labels: 739
+Few labels:      3369
+Zero labels:     163
+
+---------------- Train Starting ----------------
+	architecture: BERT-LWAN
+	token_encoder: bert
+	label_encoder: None
+	n_hidden_layers: 1
+	hidden_units_size: 100
+	dropout_rate: 0.1
+	word_dropout_rate: 0.0
+	lr: 2e-05
+	batch_size: 8
+	epochs: 20
+	token_encoding: bert
+	embeddings: law2vec.200d.txt
+	bert: bert-base-uncased
+Load training/validation data
+------------------------------
+Compile neural network
+------------------------------
+`lr` is deprecated, please use `learning_rate` instead, or use the legacy optimizer, e.g.,tf.keras.optimizers.legacy.Adam.
+Model: "model"
+________________________________________________________________________________________________________________________________________________________________________________________________________
+ Layer (type)                                                     Output Shape                                Param #                 Connected to                                                      
+========================================================================================================================================================================================================
+ word_inputs (InputLayer)                                         [(None, None)]                              0                       []                                                                
+                                                                                                                                                                                                        
+ tf_bert_model (TFBertModel)                                      TFBaseModelOutputWithPoolingAndCrossAttent  109482240               ['word_inputs[0][0]']                                             
+                                                                  ions(last_hidden_state=(None, None, 768),                                                                                             
+                                                                   pooler_output=(None, 768),                                                                                                           
+                                                                   past_key_values=None, hidden_states=None,                                                                                            
+                                                                   attentions=None, cross_attentions=None)                                                                                              
+                                                                                                                                                                                                        
+ spatial_dropout1d (SpatialDropout1D)                             (None, None, 768)                           0                       ['tf_bert_model[0][0]']                                           
+                                                                                                                                                                                                        
+ camouflage (Camouflage)                                          (None, None, 768)                           0                       ['spatial_dropout1d[0][0]',                                       
+                                                                                                                                       'word_inputs[0][0]']                                             
+                                                                                                                                                                                                        
+ label_wise_attention (LabelWiseAttention)                        (None, 4654)                                7153198                 ['camouflage[0][0]']                                              
+                                                                                                                                                                                                        
+========================================================================================================================================================================================================
+Total params: 116,635,438
+Trainable params: 116,635,438
+Non-trainable params: 0
+________________________________________________________________________________________________________________________________________________________________________________________________________
+Fit model
+-----------

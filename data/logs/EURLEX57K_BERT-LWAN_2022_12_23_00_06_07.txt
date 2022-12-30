@@ -1,0 +1,23 @@
+Load labels' data
+-------------------
+#Labels:         4654
+Frequent labels: 739
+Few labels:      3369
+Zero labels:     163
+
+---------------- Train Starting ----------------
+	architecture: BERT-LWAN
+	token_encoder: bert
+	label_encoder: None
+	n_hidden_layers: 1
+	hidden_units_size: 100
+	dropout_rate: 0.1
+	word_dropout_rate: 0.0
+	lr: 2e-05
+	batch_size: 8
+	epochs: 20
+	token_encoding: bert
+	embeddings: law2vec.200d.txt
+	bert: bert-base-uncased
+Load training/validation data
+------------------------------
