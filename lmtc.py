@@ -30,7 +30,6 @@ logging.getLogger("transformers").setLevel(logging.ERROR)
 
 LOGGER = logging.getLogger(__name__)
 
-
 class LMTC:
 
     def __init__(self):
