@@ -1,24 +1,25 @@
 {
   "task": {
-    "dataset": "EURLEX57K"
+    "dataset": "cpv"
   },
   "model": {
-    "architecture": "BERT-LWAN",
-    "token_encoder": "bert",
+    "architecture": "ZERO-LWAN-BIGRU",
+    "token_encoder": "grus",
     "label_encoder": null,
     "n_hidden_layers": 1,
-    "hidden_units_size": 100,
-    "dropout_rate": 0.1,
+    "hidden_units_size": 300,
+    "dropout_rate": 0.4,
     "word_dropout_rate": 0.00,
-    "lr": 2e-5,
-    "batch_size": 8,
-    "epochs": 20,
-    "token_encoding": "bert",
-    "embeddings": "law2vec.200d.txt",
-    "bert": "bert-base-uncased"
+    "lr": 0.001,
+    "batch_size": 16,
+    "epochs": 50,
+    "attention_mechanism": "attention",
+    "token_encoding": "word2vec",
+    "embeddings": "glove.6B.200d.txt",
+    "bert": null
   },
   "sampling": {
-    "max_sequence_size": 512,
+    "max_sequence_size": 5000,
     "max_label_size": 15,
     "few_threshold": 50,
     "evaluation@k": 10

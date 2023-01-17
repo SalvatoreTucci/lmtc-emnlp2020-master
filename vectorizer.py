@@ -57,7 +57,7 @@ class W2VTokenizer(Tokenizer):
 
         self.word_indices = {'PAD': 0}
         count = 1
-        with open(os.path.join(VECTORS_DIR, w2v_model)) as file:
+        with open(os.path.join(VECTORS_DIR, w2v_model), encoding="utf-8") as file:
             for line in file.readlines()[1:]:
                 self.word_indices[line.split()[0]] = count
                 count += 1

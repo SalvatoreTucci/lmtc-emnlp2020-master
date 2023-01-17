@@ -1,3 +1,5 @@
+import sys
+
 import os
 import logging
 import json
@@ -43,6 +45,7 @@ class LMTC:
         self.load_label_descriptions()
 
     def load_label_descriptions(self):
+
         LOGGER.info('Load labels\' data')
         LOGGER.info('-------------------')
 
@@ -50,12 +53,11 @@ class LMTC:
         train_files = glob.glob(os.path.join(DATA_SET_DIR, Configuration['task']['dataset'], 'train', '*.json'))
         train_counts = Counter()
         for filename in tqdm.tqdm(train_files):
-            with open(filename) as file:
+            with open(filename, encoding="utf-8") as file:
                 data = json.load(file)
-                for concept in data['concepts']:
-                    train_counts[concept] += 1
+                train_counts[data['cpv']] += 1 #todo da altre parti?
 
-        train_concepts = set(list(train_counts))
+        train_cpv = set(list(train_counts))
 
         frequent, few = [], []
         for i, (label, count) in enumerate(train_counts.items()):
@@ -66,28 +68,25 @@ class LMTC:
 
         # Load dev/test datasets and count labels
         rest_files = glob.glob(os.path.join(DATA_SET_DIR, Configuration['task']['dataset'], 'dev', '*.json'))
-        rest_files += glob.glob(os.path.join(DATA_SET_DIR, Configuration['task']['dataset'], 'test', '*.json'))
-        rest_concepts = set()
+        rest_files += glob.glob(os.path.join(DATA_SET_DIR, Configuration['task']['dataset'], 'test', '*.json'))    ######
+
+        rest_cpv = set()
         for filename in tqdm.tqdm(rest_files):
-            with open(filename) as file:
+            with open(filename, encoding="utf-8") as file:
                 data = json.load(file)
-                for concept in data['concepts']:
-                    rest_concepts.add(concept)
+                for cpv in data['cpv']:
+                    rest_cpv.add(data['cpv'])  #
 
         # Load label descriptors
         with open(os.path.join(DATA_SET_DIR, Configuration['task']['dataset'],
-                               '{}.json'.format(Configuration['task']['dataset']))) as file:
+                               '{}.json'.format(Configuration['task']['dataset'])), encoding="utf-8") as file:
             data = json.load(file)
             none = set(data.keys())
 
-        none = none.difference(train_concepts.union((rest_concepts)))
-        parents = []
-        for key, value in data.items():
-            parents.extend(value['parents'])
-        none = none.intersection(set(parents))
+        none = none.difference(train_cpv.union(rest_cpv))
 
         # Compute zero-shot group
-        zero = list(rest_concepts.difference(train_concepts))
+        zero = list(rest_cpv.difference(train_cpv))
         true_zero = deepcopy(zero)
         zero = zero + list(none)
 
@@ -96,16 +95,16 @@ class LMTC:
         k = 0
         for group in [frequent, few, zero]:
             self.margins.append((k, k + len(group)))
-            for concept in group:
-                self.label_ids[concept] = k
+            for cpv in group:
+                self.label_ids[cpv] = k
                 k += 1
         self.margins[-1] = (self.margins[-1][0], len(frequent) + len(few) + len(true_zero))
 
         label_terms = []
         self.label_terms_text = []
-        for i, (label, index) in enumerate(self.label_ids.items()):
-            label_terms.append([token for token in word_tokenize(data[label]['label']) if re.search('[A-Za-z]', token)])
-            self.label_terms_text.append(data[label]['label'])
+        for i, (cpv, index) in enumerate(self.label_ids.items()):
+            label_terms.append([token for token in word_tokenize(data[cpv]['descrizione']) if re.search('[A-Za-z]', token)])
+            self.label_terms_text.append(data[cpv]['descrizione'])
 
         if 'bert' not in Configuration['model']['token_encoder']:
             self.label_terms_ids = self.vectorizer.tokenize(label_terms,
@@ -115,10 +114,8 @@ class LMTC:
             self.label_terms_ids = self.vectorizer.tokenize(label_terms,
                                                             max_sequence_size=Configuration['sampling']['max_label_size'])
 
+
         LOGGER.info('#Labels:         {}'.format(len(label_terms)))
-        LOGGER.info('Frequent labels: {}'.format(len(frequent)))
-        LOGGER.info('Few labels:      {}'.format(len(few)))
-        LOGGER.info('Zero labels:     {}'.format(len(true_zero)))
 
         # Compute label hierarchy depth and build labels' graph
         if 'graph' in Configuration['model']['architecture'].lower():
@@ -147,7 +144,6 @@ class LMTC:
         documents = []
         for filename in tqdm.tqdm(sorted(filenames)):
             documents.append(loader.read_file(filename))
-
         return documents
 
     def process_dataset(self, documents):
@@ -160,10 +156,9 @@ class LMTC:
         targets = []
         for document in documents:
             samples.append(document.tokens)
-            targets.append(document.tags)
-
+#
         del documents
-        return samples, targets
+        return samples
 
     def encode_dataset(self, sequences, tags):
         samples = self.vectorizer.tokenize(sequences=sequences,
@@ -197,13 +192,13 @@ class LMTC:
         LOGGER.info('------------------------------')
 
         documents = self.load_dataset('train')
-        train_samples, train_tags = self.process_dataset(documents)
-        train_generator = SampleGenerator(train_samples, train_tags, experiment=self,
+        train_samples = self.process_dataset(documents)
+        train_generator = SampleGenerator(train_samples, experiment=self,
                                           batch_size=Configuration['model']['batch_size'])
 
         documents = self.load_dataset('dev')
-        val_samples, val_tags = self.process_dataset(documents)
-        val_generator = SampleGenerator(val_samples, val_tags, experiment=self,
+        val_samples = self.process_dataset(documents)
+        val_generator = SampleGenerator(val_samples, experiment=self,
                                         batch_size=Configuration['model']['batch_size'])
 
         # Compile neural network
@@ -308,10 +303,9 @@ class SampleGenerator(Sequence):
     :return: x_batch, y_batch
     """
 
-    def __init__(self, samples, targets, experiment, batch_size=32, shuffle=True):
+    def __init__(self, samples, experiment, batch_size=32, shuffle=True):
         """Initialization"""
         self.data_samples = samples
-        self.targets = targets
         self.batch_size = batch_size
         self.indices = np.arange(len(samples))
         self.experiment = experiment

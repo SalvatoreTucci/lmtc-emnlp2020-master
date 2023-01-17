@@ -10,12 +10,11 @@ class Document:
     """
     tagger = Tagger()
 
-    def __init__(self, text, tags, filename=None):
+    def __init__(self, text, filename=None):
         """
         :param text: document text as a string
         :param tags: list of Tag objects
         """
         self.tokens = [token.text for token in Document.tagger.tokenize_text(text)]
-        self.tags = tags
         self.text = text
         self.filename = filename
